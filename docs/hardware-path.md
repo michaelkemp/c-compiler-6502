@@ -18,9 +18,9 @@ this repo yet.
   I/O — real 6502 systems do I/O this way (e.g. via a VIA/PIA chip), so our
   toy console device sits in the same architectural slot a real I/O chip
   would.
-- The assembler (Phase 4) will emit a flat binary image at a fixed load
-  address — the same kind of image you'd burn to an EPROM/flash chip for a
-  real ROM.
+- The assembler (Phase 4, done) emits a flat binary image
+  (`AssembledImage(origin, data)`) at a fixed load address — the same kind
+  of image you'd burn to an EPROM/flash chip for a real ROM.
 
 ## Deliberately deferred: bitmap/graphics display
 

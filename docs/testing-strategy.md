@@ -1,5 +1,24 @@
 # Testing strategy
 
+## Assembler (Phase 4)
+
+Unit tests split by concern, same pattern as the CPU core:
+`tests/asm/test_expr.py` (number/label expressions), `test_operands.py`
+(addressing-mode detection), `test_directives.py`, `test_labels_and_branches.py`,
+and an end-to-end `test_assemble_program.py` (assemble → `Machine` → real
+console output).
+
+Since the assembler can't consume Klaus Dormann's actual `.a65` source
+(it uses macros/conditional assembly this minimal assembler doesn't
+support), it's cross-checked against that suite two other ways instead:
+`test_encoding_matches_cpu.py` proves every `(mnemonic, mode)` the
+assembler can emit round-trips to the exact opcode byte the CPU decodes
+(guaranteed by construction — `encoding.py` inverts the CPU's own
+`OPCODES` table rather than duplicating it), and
+`test_dormann_spot_check.py` reproduces the first 8 real instructions of
+`6502_functional_test.bin` byte-for-byte from hand-written source in our
+syntax.
+
 ## CPU core (Phase 1-3)
 
 Two complementary layers:
@@ -62,4 +81,5 @@ for a single expression) as they're built, the same way as the CPU core.
 
 CPU core: the functional test suite passes as of Phase 3 (traps at `$3469`
 after 30,646,177 steps, ~80s in plain CPython); decimal/interrupt tests
-deferred, see above. Compiler testing not started.
+deferred, see above. Assembler: done as of Phase 4, 126 fast tests total
+across both. Compiler testing not started.

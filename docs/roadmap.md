@@ -70,6 +70,29 @@ Known gaps, updated now that Phase 3's functional suite is wired up:
       run through `Machine`, producing `console.output_text == "HI"` —
       `tests/emulator/test_machine.py`
 
+### Planned follow-up: live I/O with the outside world (next session)
+
+`ConsoleDevice` is currently in-process only — output collects into a
+Python `bytearray`, input only ever comes from a pre-loaded queue
+(`feed_input()`). Nothing connects it to a real terminal. Agreed design
+for the next session:
+
+- [ ] A live-I/O mode for `ConsoleDevice` (or a variant of it): each byte
+      written to the output register prints immediately to real stdout;
+      a read from the input register blocks on real stdin when its queue
+      is empty, instead of returning `0`.
+- [ ] A small CLI entry point that loads a ROM image (e.g. from
+      `c6502.asm.assemble()`'s output, or a raw binary file) into a
+      `Machine` and drives the run loop interactively — the first way to
+      actually sit down and type at a running 6502 program.
+- Rationale: needs almost no new plumbing (same `read8`/`write8` device
+  interface `Bus` already dispatches to), and it's the same abstraction
+  point that would later get swapped for a real serial link to actual
+  hardware (`docs/hardware-path.md`) — nothing built here gets thrown
+  away when that happens. A network/socket-based console was considered
+  and set aside for now (adds connection-handling/concurrency complexity
+  with no current need).
+
 ## Phase 3 — Validation (functional suite done; decimal/interrupt deferred)
 
 - [x] Obtain Klaus Dormann's functional test suite in a runnable form —

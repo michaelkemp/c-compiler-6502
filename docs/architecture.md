@@ -25,20 +25,23 @@ this file whenever the map changes; it's the single source of truth for
 both the emulator's `Bus` implementation and anything we write in
 assembly/C.
 
-## Console I/O device (draft)
+## Console I/O device (implemented, Phase 2)
 
-A minimal memory-mapped device at `$4000`-`$4001` for Phase 2:
+A minimal memory-mapped device at `$4000`-`$4001`
+(`src/c6502/emulator/devices.py`'s `ConsoleDevice`):
 
 - `$4000` — **output register**: writing a byte here appends it (e.g. as an
-  ASCII character) to the emulator's console output.
-- `$4001` — **input status/data**: read to check "is a byte available" /
-  consume the next input byte (exact protocol TBD when we implement this —
-  keep it simple, e.g. a single register that reads `0` when nothing is
-  waiting, or split into a status bit + data register if that proves
-  easier to poll from assembly).
+  ASCII character) to the emulator's console output (`console.output_text`).
+- `$4001` — **input register**: reading it pops and returns the next
+  queued input byte, or `0` if none is waiting. A program feeds input via
+  `console.feed_input(...)` — there's no live stdin/stdout hookup yet
+  (everything is in-process Python bytes). Agreed direction: a live-I/O
+  mode (output prints to real stdout immediately, input blocks on real
+  stdin) plus a small CLI runner — planned for next session, see
+  `docs/roadmap.md`'s "Planned follow-up" under Phase 2.
 
-This is deliberately tiny — just enough to write "hello world" and read a
-line of input. Expand later if real programs need more (e.g. a timer,
+This is deliberately tiny — just enough to write "hello world" and read
+queued input. Expand later if real programs need more (e.g. a timer,
 multiple ports) rather than speculatively building more now.
 
 ## Clock / stepping model
@@ -75,6 +78,7 @@ revisit this section then.
 
 ## Status
 
-Draft, written during Phase 0. Nothing here is implemented yet — treat it as
-the plan to build Phase 2 (and later Phase 5) against, and update it as
-reality diverges from the plan.
+The memory map, `Bus`, and `ConsoleDevice` above are implemented as
+described (Phase 2, `src/c6502/emulator/bus.py`/`devices.py`) and match
+this doc exactly — nothing diverged during implementation. The calling
+convention section is still a plan, not yet implemented (that's Phase 5).
