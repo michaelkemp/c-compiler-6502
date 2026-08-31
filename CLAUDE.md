@@ -42,8 +42,9 @@ change.
   submodules for the emulator, assembler, and compiler, rather than separate
   top-level projects — this keeps end-to-end tests (C → asm → emulator)
   straightforward.
-- **CPU correctness testing**: validated against Klaus Dormann's public
-  domain 6502 functional test suite, plus our own unit tests. See
+- **CPU correctness testing**: validated against Klaus Dormann's 6502
+  functional test suite (GPLv3 — fetched on demand, not vendored, see
+  `scripts/fetch_dormann_tests.sh`), plus our own unit tests. See
   [docs/testing-strategy.md](docs/testing-strategy.md).
 - **C compiler v1 scope**: a tiny arithmetic/control-flow subset first,
   grown incrementally. See [docs/c-subset.md](docs/c-subset.md).
@@ -84,17 +85,25 @@ Summary:
       (confirmed over a bitmap framebuffer — see `docs/hardware-path.md`),
       and a `Machine` wrapper with a step/run loop. End-to-end verified with
       a hand-assembled program producing real console output.
-- [ ] **Phase 3** — validate the CPU core against Klaus Dormann's functional
-      test suite (confirmed independent of Phase 2 — the suite just wants
-      contiguous writable RAM, so it runs against `FlatMemory`)
-- [ ] **Phase 4** — our own 6502 assembler
+- [x] **Phase 3** — validated the CPU core against Klaus Dormann's
+      functional test suite: **passes**, trapping at the documented success
+      address (`$3469`) after 30,646,177 steps (~80s). Not vendored (it's
+      GPLv3, corrected from an earlier wrong "public domain" claim in this
+      file) — fetched on demand via `scripts/fetch_dormann_tests.sh` into a
+      gitignored fixture, and run via `pytest -m slow` (excluded from the
+      default fast suite). Decimal/interrupt sub-tests deferred — see
+      `docs/roadmap.md`.
+- [ ] **Phase 4** — our own 6502 assembler (`ca65`/`ld65` are installed
+      locally and could help validate the future assembler's output, but
+      aren't a dependency of it)
 - [ ] **Phase 5** — tiny-C compiler v1
 - [ ] **Phase 6** — end-to-end integration (C → asm → emulator)
 - [ ] **Phase 7** — hardware-path design notes
 
 `src/c6502/emulator/{cpu,bus,addressing,instructions,opcodes,trace,
-devices,machine}.py` are implemented and tested. `src/c6502/asm/*` and
-`src/c6502/cc/*` are still stubs for Phases 4 and 5.
+devices,machine}.py` are implemented and tested (78 fast tests +
+1 slow Dormann-suite test). `src/c6502/asm/*` and `src/c6502/cc/*` are
+still stubs for Phases 4 and 5.
 
 ## Reference documentation
 
@@ -107,8 +116,9 @@ cleanliness — pull specific facts as needed rather than bulk-copying):
   [masswerk.at/6502/6502_instruction_set.html](https://masswerk.at/6502/6502_instruction_set.html)
 - General 6502 knowledge base, tutorials, forum:
   [6502.org](https://6502.org)
-- Klaus Dormann's public-domain 6502/65C02 functional test suite (used as
-  our emulator correctness gate):
+- Klaus Dormann's 6502/65C02 functional test suite (GPLv3; used as our
+  emulator correctness gate, fetched on demand rather than vendored — see
+  `scripts/fetch_dormann_tests.sh` and `docs/testing-strategy.md`):
   [github.com/Klaus2m5/6502_65C02_functional_tests](https://github.com/Klaus2m5/6502_65C02_functional_tests)
 
 ## Running tests
@@ -139,3 +149,11 @@ python3 -m venv .venv
 building the assembler/compiler and want `import c6502` to work from a
 plain `python3` shell too, but it's not required just to run the test
 suite.
+
+Plain `pytest` only runs the fast suite (~0.1s). To also validate against
+Klaus Dormann's functional test suite (~1-2 min, not run by default):
+```
+scripts/fetch_dormann_tests.sh   # one-time per machine, fetches a GPLv3
+                                  # binary into a gitignored fixture dir
+pytest -m slow
+```

@@ -32,15 +32,20 @@ and carries only the summary.
 - [x] Incremental pytest suite per instruction family —
       `tests/emulator/test_*.py` (66 tests)
 
-Known gaps to revisit once Klaus Dormann's suite is wired up in Phase 3:
+Known gaps, updated now that Phase 3's functional suite is wired up:
 - Decimal-mode (`D` flag) `ADC`/`SBC` flag behavior (N/V/Z/C) is a
-  best-effort implementation of the commonly documented NMOS algorithm, not
-  yet cross-checked bit-for-bit against Dormann's dedicated decimal test —
+  best-effort implementation of the commonly documented NMOS algorithm —
   see the comments in `instructions.py`'s `_adc_decimal`/`_sbc_decimal`.
+  Passing the functional test suite (which exercises decimal mode by
+  default) is a real signal this is at least mostly right, but it's still
+  not cross-checked bit-for-bit against Dormann's dedicated, exhaustive
+  decimal test, which remains deferred (see Phase 3 below).
 - `IRQ`/`NMI` are implemented as immediate register-level push/jump; no
   attempt yet at cycle-by-cycle interrupt-polling timing (e.g. exactly
   which instruction boundary an interrupt is recognized at) — flagged in
-  `docs/hardware-path.md` as a timing-fidelity gap.
+  `docs/hardware-path.md` as a timing-fidelity gap, and not covered by the
+  functional suite either (that needs the separate, also-deferred
+  interrupt test).
 
 ## Phase 2 — Minimal system harness (done)
 
@@ -65,16 +70,32 @@ Known gaps to revisit once Klaus Dormann's suite is wired up in Phase 3:
       run through `Machine`, producing `console.output_text == "HI"` —
       `tests/emulator/test_machine.py`
 
-## Phase 3 — Validation
+## Phase 3 — Validation (functional suite done; decimal/interrupt deferred)
 
-- [ ] Obtain Klaus Dormann's functional test suite in a runnable form
-      (decide: vendor a pre-assembled binary vs. assemble the `.a65` source
-      ourselves with an external assembler used only for this)
-- [ ] Load + run it against the emulator; assert it reaches the suite's
-      defined "success" trap rather than a "failure" trap
-- [ ] Hand-written unit tests for individual opcodes/addressing modes/flags
-      as a complement (useful for pinpointing failures the functional suite
-      only reports in aggregate)
+- [x] Obtain Klaus Dormann's functional test suite in a runnable form —
+      it's GPLv3 (corrected from an earlier, wrong "public domain" claim in
+      this repo's docs), so it's fetched on demand rather than vendored:
+      `scripts/fetch_dormann_tests.sh` downloads the upstream repo's
+      pre-assembled `6502_functional_test.bin` into the gitignored
+      `tests/emulator/fixtures/dormann/`
+- [x] Load + run it against the emulator; assert it reaches the suite's
+      success trap (`$3469`) rather than a failure trap —
+      `tests/emulator/test_dormann_functional.py`, marked `@pytest.mark.slow`
+      (excluded from the default `pytest` run; opt in with `pytest -m slow`).
+      **Passes**: traps at `$3469` after 30,646,177 steps (~80s).
+- [x] Hand-written unit tests for individual opcodes/addressing
+      modes/flags as a complement — done in Phase 1 (66 tests) plus Phase 2
+      (12 more), for 78 total in the default fast suite.
+- [ ] Deferred, non-blocking: `6502_decimal_test.a65` and
+      `6502_interrupt_test.a65` have no pre-assembled binary in the
+      upstream repo (unlike the functional test) and would need real
+      assembling (their source targets the old AS65 assembler, not
+      directly `ca65`-compatible, though `ca65`/`ld65` are installed
+      locally) plus, for the interrupt test, a custom "feedback register"
+      I/O device to inject IRQ/NMI. The functional test binary already
+      exercises decimal-mode ADC/SBC and passed, so this isn't zero
+      decimal-mode coverage even without the dedicated test — see
+      `docs/testing-strategy.md`.
 
 ## Phase 4 — Our own 6502 assembler
 

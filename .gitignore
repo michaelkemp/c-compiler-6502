@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Klaus Dormann's 6502 test suite (GPLv3) -- fetched on demand via
+# scripts/fetch_dormann_tests.sh, never vendored. See docs/testing-strategy.md.
+tests/emulator/fixtures/dormann/
