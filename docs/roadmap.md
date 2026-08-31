@@ -97,12 +97,40 @@ Known gaps, updated now that Phase 3's functional suite is wired up:
       decimal-mode coverage even without the dedicated test — see
       `docs/testing-strategy.md`.
 
-## Phase 4 — Our own 6502 assembler
+## Phase 4 — Our own 6502 assembler (done)
 
-- [ ] Mnemonic + addressing-mode parsing
-- [ ] Labels and forward references
-- [ ] Directives: `.org`, `.byte`, `.word`, `.res` (reserve space)
-- [ ] Emits a flat binary image at a given load address
+- [x] Mnemonic + addressing-mode parsing — `src/c6502/asm/operands.py`.
+      Opcode encoding (`encoding.py`) is derived by inverting
+      `c6502.emulator.opcodes.OPCODES`, not a second hand-written table —
+      guaranteed to never drift from what the CPU decodes (proven by
+      `tests/asm/test_encoding_matches_cpu.py`).
+- [x] Labels and forward references — two-pass assembly
+      (`src/c6502/asm/assembler.py`), with a deliberate simplifying rule:
+      a symbol (label or equate) used as an address operand always
+      assembles as absolute addressing, even if its value would fit zero
+      page (only a bare numeric/char literal gets the zero-page
+      encoding). This avoids fixed-point-iteration sizing entirely — see
+      the design note in `assembler.py`'s module docstring.
+- [x] Directives: `.org`, `.byte`, `.word`, `.res` — plus a `name = expr`
+      equate syntax (matches the `zero_page = $a` style seen in Klaus
+      Dormann's source).
+- [x] Emits a flat binary image (`AssembledImage(origin, data)`) — a
+      direct drop-in for `Bus.load_rom()`.
+- [x] End-to-end proof: assembled the same "HI" console program from
+      Phase 2's hand-encoded test, now written as real assembly source,
+      and ran it through `Machine` — `tests/asm/test_assemble_program.py`.
+- [x] Cross-checked against Klaus Dormann's suite two ways (can't feed its
+      actual `.a65` source through our assembler — it uses macros and
+      conditional assembly this minimal assembler deliberately doesn't
+      support): an opcode-table round-trip guarantee
+      (`test_encoding_matches_cpu.py`) and a spot-check reproducing the
+      first 8 real instructions of `6502_functional_test.bin` byte-for-byte
+      (`test_dormann_spot_check.py`).
+
+Deferred, non-blocking: macros, `.include`, multiple named segments,
+low/high-byte operators (`<`/`>`), auto-shrinking forward references to
+zero page. Would be needed to fully reassemble Dormann's suite ourselves,
+but not for the small programs Phase 5/6 generate.
 
 ## Phase 5 — Tiny-C compiler v1
 

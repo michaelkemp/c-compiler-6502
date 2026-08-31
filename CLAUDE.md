@@ -93,17 +93,22 @@ Summary:
       gitignored fixture, and run via `pytest -m slow` (excluded from the
       default fast suite). Decimal/interrupt sub-tests deferred — see
       `docs/roadmap.md`.
-- [ ] **Phase 4** — our own 6502 assembler (`ca65`/`ld65` are installed
-      locally and could help validate the future assembler's output, but
-      aren't a dependency of it)
+- [x] **Phase 4** — our own 6502 assembler (`src/c6502/asm/`): mnemonic +
+      addressing-mode parsing, two-pass label/forward-reference support,
+      `.org`/`.byte`/`.word`/`.res` + equates, emitting a flat binary image
+      that drops straight into `Bus.load_rom()`. Its opcode encoding is
+      derived by inverting the CPU's own `OPCODES` table, so it can never
+      drift from what the CPU decodes. Verified end-to-end (assembled "HI"
+      program running on `Machine`) and cross-checked against real
+      Dormann-suite bytes (see `docs/roadmap.md`).
 - [ ] **Phase 5** — tiny-C compiler v1
 - [ ] **Phase 6** — end-to-end integration (C → asm → emulator)
 - [ ] **Phase 7** — hardware-path design notes
 
 `src/c6502/emulator/{cpu,bus,addressing,instructions,opcodes,trace,
-devices,machine}.py` are implemented and tested (78 fast tests +
-1 slow Dormann-suite test). `src/c6502/asm/*` and `src/c6502/cc/*` are
-still stubs for Phases 4 and 5.
+devices,machine}.py` and `src/c6502/asm/{expr,encoding,operands,
+assembler}.py` are implemented and tested (126 fast tests + 1 slow
+Dormann-suite test). `src/c6502/cc/*` is still a stub for Phase 5.
 
 ## Reference documentation
 
