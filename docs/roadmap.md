@@ -42,16 +42,28 @@ Known gaps to revisit once Klaus Dormann's suite is wired up in Phase 3:
   which instruction boundary an interrupt is recognized at) — flagged in
   `docs/hardware-path.md` as a timing-fidelity gap.
 
-## Phase 2 — Minimal system harness
+## Phase 2 — Minimal system harness (done)
 
-- [ ] `Bus`/`Memory` abstraction implementing our memory map
-      (see `docs/architecture.md`)
-- [ ] RAM region
-- [ ] ROM region (loadable from a binary image)
-- [ ] A minimal memory-mapped console I/O device (write a byte → appears as
-      output; a status/data register pair for input)
-- [ ] A step/run loop standing in for "the clock" (instruction-stepped for
-      now; cycle-accurate timing is not a goal yet)
+- [x] `Bus` implementing our memory map (see `docs/architecture.md`) —
+      `src/c6502/emulator/bus.py`. `FlatMemory` (Phase 1) is unchanged and
+      still what Phase 3's Klaus Dormann suite will run against.
+- [x] RAM region — one `bytearray` backing `$0000`-`$7FFF` (zero page,
+      hardware stack, general RAM, and the still-reserved `$4100`-`$7FFF`
+      all live in it)
+- [x] ROM region, loadable via `Bus.load_rom()` — read-only from the CPU's
+      normal write path (`ReadOnlyMemoryError` on a write attempt; a
+      deliberate emulator convention, not a claim about real ROM chips —
+      see the comment in `bus.py`)
+- [x] A minimal memory-mapped text console (`$4000` output / `$4001`
+      input) — `src/c6502/emulator/devices.py`'s `ConsoleDevice`. Confirmed
+      text-console over a Nand2Tetris-style bitmap framebuffer this
+      session — see `docs/hardware-path.md`.
+- [x] A step/run loop standing in for "the clock" — `Machine.run()` in
+      `src/c6502/emulator/machine.py`, bounded by a `max_steps` count since
+      there's no halt-detection convention yet (a Phase 3/6 concern)
+- [x] End-to-end proof: a hand-assembled "HI" program loaded into ROM,
+      run through `Machine`, producing `console.output_text == "HI"` —
+      `tests/emulator/test_machine.py`
 
 ## Phase 3 — Validation
 

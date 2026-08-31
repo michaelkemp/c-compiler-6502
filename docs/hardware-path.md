@@ -22,6 +22,24 @@ this repo yet.
   address — the same kind of image you'd burn to an EPROM/flash chip for a
   real ROM.
 
+## Deliberately deferred: bitmap/graphics display
+
+Nand2Tetris's Hack computer has a memory-mapped bitmap framebuffer (512x256
+1-bit pixels) as its screen. We considered the same for Phase 2 and chose a
+text console instead (see `docs/architecture.md`), because a bitmap display
+is a much bigger lift on both sides of this project:
+- **Software**: needs a font/character-set ROM to draw any text, plus an
+  actual viewer (e.g. a Tkinter/pygame window) to see the bitmap at all.
+- **Hardware**: real bitmap video (sync signals, timing, memory arbitration
+  with the CPU) needs dedicated video-generation circuitry -- historically
+  a whole separate chip (Apple II's video hardware, the C64's VIC-II,
+  etc.) -- something "6502 + RAM + an Arduino" can't produce directly, unlike
+  a text console (an Arduino relaying bytes to a serial terminal or a cheap
+  character LCD is a realistic build).
+
+Worth revisiting once the text-console toolchain works end-to-end -- as a
+later stretch goal, not a Phase 2 requirement.
+
 ## What would need to change
 
 - **Timing fidelity**: our emulator is instruction-stepped, not

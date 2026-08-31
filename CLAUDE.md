@@ -79,18 +79,22 @@ Summary:
       a step trace formatter, 66 pytest tests) — see `docs/roadmap.md` for
       the known gaps left for Phase 3 (decimal-mode flag exactness,
       interrupt timing fidelity)
-- [ ] **Phase 2** — minimal system harness (RAM/ROM/IO regions, console
-      device, step/run loop)
+- [x] **Phase 2** — minimal system harness: a real memory-mapped `Bus`
+      (RAM/ROM/IO regions per `docs/architecture.md`), a text `ConsoleDevice`
+      (confirmed over a bitmap framebuffer — see `docs/hardware-path.md`),
+      and a `Machine` wrapper with a step/run loop. End-to-end verified with
+      a hand-assembled program producing real console output.
 - [ ] **Phase 3** — validate the CPU core against Klaus Dormann's functional
-      test suite
+      test suite (confirmed independent of Phase 2 — the suite just wants
+      contiguous writable RAM, so it runs against `FlatMemory`)
 - [ ] **Phase 4** — our own 6502 assembler
 - [ ] **Phase 5** — tiny-C compiler v1
 - [ ] **Phase 6** — end-to-end integration (C → asm → emulator)
 - [ ] **Phase 7** — hardware-path design notes
 
-`src/c6502/emulator/{cpu,bus,addressing,instructions,opcodes,trace}.py` are
-implemented and tested. `src/c6502/emulator/devices.py`, `src/c6502/asm/*`,
-and `src/c6502/cc/*` are still stubs for Phases 2, 4, and 5.
+`src/c6502/emulator/{cpu,bus,addressing,instructions,opcodes,trace,
+devices,machine}.py` are implemented and tested. `src/c6502/asm/*` and
+`src/c6502/cc/*` are still stubs for Phases 4 and 5.
 
 ## Reference documentation
 
