@@ -109,7 +109,29 @@ cleanliness — pull specific facts as needed rather than bulk-copying):
 
 ## Running tests
 
+No compiled/native dependencies and no runtime dependencies at all
+(`dependencies = []` in `pyproject.toml`) -- the only thing you need is
+Python 3.11+ and `pytest` itself. `pyproject.toml` sets `pythonpath =
+["src"]`, so pytest finds the `c6502` package directly from the source
+tree; you do **not** need to `pip install` this package (editable or
+otherwise) just to run the tests.
+
+Quickest path, if `pytest` is already available on your system (via your
+OS package manager, `pipx`, etc.):
 ```
-pip install -e ".[dev]"
 pytest
 ```
+
+Otherwise, isolate it in a venv (recommended, and the only option on
+distros that block plain `pip install` outside one, e.g. Debian/Ubuntu's
+PEP 668 "externally managed environment"):
+```
+python3 -m venv .venv
+.venv/bin/pip install pytest
+.venv/bin/pytest
+```
+
+`pip install -e ".[dev]"` still works and is worth doing once you're
+building the assembler/compiler and want `import c6502` to work from a
+plain `python3` shell too, but it's not required just to run the test
+suite.
