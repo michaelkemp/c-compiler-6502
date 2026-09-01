@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Optional
 
-from .devices import ConsoleDevice
+from .devices import AciaDevice
 
 IO_BASE = 0x4000
 IO_SIZE = 0x0100
@@ -38,15 +38,15 @@ class ReadOnlyMemoryError(Exception):
 class Bus:
     """The real system memory map: RAM + ROM + a memory-mapped I/O window."""
 
-    def __init__(self, console: Optional[ConsoleDevice] = None) -> None:
+    def __init__(self, acia: Optional[AciaDevice] = None) -> None:
         self.ram = bytearray(ROM_BASE)  # backs $0000-$7FFF in full
         self.rom = bytearray(ROM_SIZE)  # $8000-$FFFF, incl. the vectors
-        self.console = console if console is not None else ConsoleDevice()
+        self.acia = acia if acia is not None else AciaDevice()
 
     def read8(self, address: int) -> int:
         address &= 0xFFFF
         if IO_BASE <= address < IO_BASE + IO_SIZE:
-            return self.console.read8(address - IO_BASE)
+            return self.acia.read8(address - IO_BASE)
         if address < ROM_BASE:
             return self.ram[address]
         return self.rom[address - ROM_BASE]
@@ -55,7 +55,7 @@ class Bus:
         address &= 0xFFFF
         value &= 0xFF
         if IO_BASE <= address < IO_BASE + IO_SIZE:
-            self.console.write8(address - IO_BASE, value)
+            self.acia.write8(address - IO_BASE, value)
             return
         if address < ROM_BASE:
             self.ram[address] = value

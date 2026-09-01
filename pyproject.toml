@@ -13,6 +13,9 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest"]
 
+[project.scripts]
+c6502-run = "c6502.run:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

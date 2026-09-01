@@ -23,13 +23,13 @@ def _build_rom() -> bytes:
     return bytes(rom)
 
 
-def test_machine_runs_hello_world_to_the_console():
+def test_machine_runs_hello_world_to_the_acia():
     machine = Machine(_build_rom())
     assert machine.cpu.pc == _PROGRAM_ORIGIN  # reset picked up the vector
 
     machine.run(max_steps=8)  # 4 real instructions, then a few JMP-to-self spins
 
-    assert machine.console.output_text == "HI"
+    assert machine.acia.output_text == "HI"
 
 
 def test_machine_run_returns_one_step_result_per_step():

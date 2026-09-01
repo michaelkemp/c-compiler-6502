@@ -25,38 +25,62 @@ this file whenever the map changes; it's the single source of truth for
 both the emulator's `Bus` implementation and anything we write in
 assembly/C.
 
-## Console I/O device
+## Console I/O device (implemented: a real ACIA)
 
-Currently implemented (Phase 2): a minimal, made-up 2-register device at
-`$4000`-`$4001` (`src/c6502/emulator/devices.py`'s `ConsoleDevice`) — write
-`$4000` to output a byte, read `$4001` to consume a queued input byte
-(`console.feed_input(...)` supplies it; no live stdin/stdout hookup, and
-no resemblance to any real chip).
+`src/c6502/emulator/devices.py`'s `AciaDevice` models the real **WDC
+W65C51N ACIA**
+([datasheet](https://www.westerndesigncenter.com/wdc/documentation/w65c51n.pdf))
+at `$4000`-`$4003` within the `$4000`-`$40FF` I/O window — replacing an
+earlier made-up 2-register protocol. Register bit meanings are taken
+directly from the datasheet (Status Register p.9, Command Register
+p.13-14), not guessed:
 
-**Planned to replace this** (see `docs/roadmap.md`'s "Planned follow-up"
-under Phase 2, decided in a design session): model the device instead
-after the real **WDC W65C51N ACIA**
-([datasheet](https://www.westerndesigncenter.com/wdc/documentation/w65c51n.pdf)),
-still within the same `$4000`-`$40FF` I/O window:
+- `$4000` — **data register**: write to transmit a byte, read to receive
+  one (reading pops the input queue, which also clears RDRF below — no
+  separate acknowledgment step needed).
+- `$4001` — **status register**: bit 7 = IRQ occurred, bit 6 = DSR (we
+  always report `0`/ready — no real modem to reflect), bit 5 = DCD
+  (always `0`/detected, same reason), bit 4 = TDRE (always `1` — we don't
+  model transmit buffering/delay), bit 3 = RDRF (a byte is waiting), bits
+  2-0 = overrun/framing/parity error (never set — we don't simulate line
+  errors). Writing this register triggers a "program reset" (clears
+  DTR/receiver-IRQ-disable/RTS in the command register), matching a real,
+  slightly obscure chip behavior.
+- `$4002` — **command register**: bit 0 = DTR (ready, and — a real,
+  easy-to-miss detail from the datasheet — this bit gates *all*
+  interrupts), bit 1 = receiver-IRQ-disable, bits 2-3 = RTS/transmit-IRQ
+  control (per the datasheet, no combination on this real chip actually
+  enables a transmit interrupt — a genuine W65C51N quirk we reproduce by
+  simply never generating one), bits 4-7 = echo mode/parity (stored for
+  read-back, not otherwise modeled).
+- `$4003` — **control register**: stored but not otherwise modeled —
+  baud rate/word length are meaningless to a software emulator.
 
-- `$4000` — **data register**: write to transmit a byte, read to receive one.
-- `$4001` — **status register**: bit 0 = receive-data-ready, bit 1 =
-  transmit-data-empty, bit 7 = an IRQ occurred — polled or, with IRQs
-  enabled, used with `cpu.irq()` (already implemented since Phase 1, not
-  yet used by anything) so the CPU is interrupted on receipt instead of
-  having to poll.
-- `$4002` — **command register**: IRQ enable/disable, among other real
-  ACIA options we likely won't need to model exactly.
-- `$4003` — **control register**: baud rate / word length — mostly
-  irrelevant to a software emulator, but real on hardware.
+`AciaDevice.irq_asserted` (`DTR and not receiver-IRQ-disabled and RDRF`)
+feeds `Machine.step()`'s IRQ pump (`src/c6502/emulator/machine.py`),
+which calls `cpu.irq()` before each instruction when true — `cpu.irq()`
+already no-ops correctly if the CPU's `I` flag is set, so ROM code that
+never does `CLI` stays purely polling-driven with this wired up.
 
 Chosen over keeping the made-up protocol specifically because a ROM
 written against a faithfully-modeled ACIA runs unmodified on real
-hardware with a real W65C51N later — see `docs/hardware-path.md`. Also
-planned: attaching this to a real pseudo-terminal (Python's `pty` module)
-rather than this process's own stdin/stdout, so an actual terminal
-program can connect to the running emulator the way it would connect to
-real hardware over a serial cable.
+hardware with a real W65C51N later — see `docs/hardware-path.md`.
+
+## Live terminal attachment (implemented)
+
+`src/c6502/run.py` (`python -m c6502.run <rom> [--origin ADDR] [--trace]`,
+or the `c6502-run` console script) attaches a running `Machine`'s ACIA to
+a real pseudo-terminal (`os.openpty()`) rather than this process's own
+stdin/stdout, so an actual terminal program (`screen <path> 9600`,
+`minicom`, PuTTY) can connect to it exactly as it would connect to real
+hardware over a serial cable. The pty is put into **raw mode**
+(`tty.setraw()`) — by default a pty is canonical/line-buffered, which
+holds bytes written master→slave (our transmitted output) until a
+newline instead of delivering them immediately; a real serial link has no
+such buffering, so raw mode is what actually matches it. `run_interactive()`
+non-blocking-polls the pty for input each step (never blocks the CPU loop
+waiting for a keystroke, matching how a real ACIA just reports "not
+ready" rather than halting the processor).
 
 ## Clock / stepping model
 
@@ -92,9 +116,6 @@ revisit this section then.
 
 ## Status
 
-The memory map and `Bus` are implemented as described (Phase 2,
-`src/c6502/emulator/bus.py`) and match this doc exactly. `ConsoleDevice`
-(`devices.py`) currently implements the made-up 2-register protocol, not
-yet the planned ACIA-shaped one described above — that's next session's
-work. The calling convention section is still a plan, not yet implemented
-(that's Phase 5).
+The memory map, `Bus`, `AciaDevice`, and the pty runner above are all
+implemented and match this doc exactly. The calling convention section is
+still a plan, not yet implemented (that's Phase 5).

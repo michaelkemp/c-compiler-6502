@@ -81,10 +81,17 @@ Summary:
       the known gaps left for Phase 3 (decimal-mode flag exactness,
       interrupt timing fidelity)
 - [x] **Phase 2** — minimal system harness: a real memory-mapped `Bus`
-      (RAM/ROM/IO regions per `docs/architecture.md`), a text `ConsoleDevice`
-      (confirmed over a bitmap framebuffer — see `docs/hardware-path.md`),
-      and a `Machine` wrapper with a step/run loop. End-to-end verified with
-      a hand-assembled program producing real console output.
+      (RAM/ROM/IO regions per `docs/architecture.md`), an `AciaDevice`
+      modeling the real WDC W65C51N serial chip (register semantics from
+      its datasheet, not guessed; replaced an earlier made-up protocol —
+      confirmed over a bitmap framebuffer, see `docs/hardware-path.md`),
+      and a `Machine` wrapper with a step/run loop + IRQ pump. Attached to
+      a real pseudo-terminal in raw mode (`src/c6502/run.py`,
+      `python -m c6502.run` / `c6502-run`), so a real terminal program can
+      connect to it like real hardware over a serial cable. End-to-end
+      verified with a hand-assembled/hand-assembled-via-our-own-assembler
+      polling echo program, both automated (in-process pty pair) and live
+      (a real subprocess + pty client round-trip).
 - [x] **Phase 3** — validated the CPU core against Klaus Dormann's
       functional test suite: **passes**, trapping at the documented success
       address (`$3469`) after 30,646,177 steps (~80s). Not vendored (it's
@@ -106,9 +113,10 @@ Summary:
 - [ ] **Phase 7** — hardware-path design notes
 
 `src/c6502/emulator/{cpu,bus,addressing,instructions,opcodes,trace,
-devices,machine}.py` and `src/c6502/asm/{expr,encoding,operands,
-assembler}.py` are implemented and tested (126 fast tests + 1 slow
-Dormann-suite test). `src/c6502/cc/*` is still a stub for Phase 5.
+devices,machine}.py`, `src/c6502/asm/{expr,encoding,operands,
+assembler}.py`, and `src/c6502/run.py` (the pty-attached CLI runner) are
+implemented and tested (136 fast tests + 1 slow Dormann-suite test).
+`src/c6502/cc/*` is still a stub for Phase 5.
 
 ## Reference documentation
 
@@ -125,6 +133,11 @@ cleanliness — pull specific facts as needed rather than bulk-copying):
   emulator correctness gate, fetched on demand rather than vendored — see
   `scripts/fetch_dormann_tests.sh` and `docs/testing-strategy.md`):
   [github.com/Klaus2m5/6502_65C02_functional_tests](https://github.com/Klaus2m5/6502_65C02_functional_tests)
+- WDC W65C51N ACIA datasheet (real serial chip our `AciaDevice` models):
+  [westerndesigncenter.com/wdc/documentation/w65c51n.pdf](https://www.westerndesigncenter.com/wdc/documentation/w65c51n.pdf)
+- `mist64/msbasic` (2-clause BSD; a modernized, `ca65`-buildable port of
+  Microsoft's now-MIT-licensed original 6502 BASIC — planned next, see
+  `docs/roadmap.md`): [github.com/mist64/msbasic](https://github.com/mist64/msbasic)
 
 ## Running tests
 

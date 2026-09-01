@@ -10,11 +10,11 @@ def test_ram_round_trip_across_zero_page_stack_and_general_ram():
         assert bus.read8(address) == 0xAB
 
 
-def test_io_window_delegates_to_console():
+def test_io_window_delegates_to_acia():
     bus = Bus()
-    bus.write8(0x4000, ord("Z"))
-    assert bus.console.output_text == "Z"
-    assert bus.read8(0x4000) == 0  # output register is write-only
+    bus.write8(0x4000, ord("Z"))  # data register, offset 0
+    assert bus.acia.output_text == "Z"
+    assert bus.read8(0x4000) == 0  # nothing queued to receive
 
 
 def test_load_rom_then_read_back():

@@ -70,37 +70,27 @@ Known gaps, updated now that Phase 3's functional suite is wired up:
       run through `Machine`, producing `console.output_text == "HI"` —
       `tests/emulator/test_machine.py`
 
-### Planned follow-up: a real serial chip + live terminal I/O (next session)
+### Follow-up: a real serial chip + live terminal I/O (done)
 
-`ConsoleDevice` is currently a made-up 2-register protocol
-(`$4000`/`$4001`), in-process only — output collects into a Python
-`bytearray`, input only ever comes from a pre-loaded queue
-(`feed_input()`). Nothing connects it to a real terminal, and a ROM
-written against it couldn't run unmodified on real hardware. Design
-session held to resolve this — decided:
-
-- [ ] **Model the device after the real WDC W65C51N ACIA**
+- [x] **Modeled the device after the real WDC W65C51N ACIA**
       ([datasheet](https://www.westerndesigncenter.com/wdc/documentation/w65c51n.pdf)) —
-      the actual, currently-manufactured serial chip real 6502 hobbyist
-      builds use (the modern version of the MOS 6551). Data/status/
-      command/control registers, TX-empty/RX-full status bits, and
-      IRQ-on-receive support (finally giving the CPU's existing
-      `cpu.irq()` a real caller instead of only the hand-driven test in
-      `tests/emulator/test_interrupts.py`). Chosen over keeping the toy
-      protocol specifically because "aim at something buildable" is a
-      real goal, not just aspirational — ROM code written against a
-      faithfully-modeled ACIA would run unmodified on real hardware with
-      a real W65C51N later.
-- [ ] **Attach it to a real pseudo-terminal**, not just this process's
-      stdin/stdout — using Python's `pty` module so an actual terminal
-      program (`screen`, `minicom`, PuTTY) can connect to the running
-      emulator exactly as it would connect to real hardware over a serial
-      cable. Chosen over plain stdio specifically to make the emulator's
-      I/O experience match the eventual real-hardware experience, not
-      just "type into this same window."
-- [ ] A small CLI entry point that loads a ROM image (e.g. from
-      `c6502.asm.assemble()`'s output, or a raw binary file) into a
-      `Machine`, opens the pty, prints its path, and drives the run loop.
+      `src/c6502/emulator/devices.py`'s `AciaDevice` (replacing the earlier
+      made-up 2-register `ConsoleDevice`). Data/status/command/control
+      registers with real bit semantics read from the datasheet, and
+      IRQ-on-receive support wired into `Machine.step()` (finally giving
+      the CPU's `cpu.irq()` a real caller beyond the hand-driven test in
+      `tests/emulator/test_interrupts.py`).
+- [x] **Attached to a real pseudo-terminal** — `src/c6502/run.py`
+      (`python -m c6502.run <rom>`, or the `c6502-run` console script),
+      using `os.openpty()` put into **raw mode** (`tty.setraw()`) so
+      transmitted bytes aren't held up by the pty's default line
+      buffering — a real gotcha hit and fixed this session (canonical
+      mode holds master→slave writes until a newline; a real serial link
+      has no such buffering).
+- [x] Proof: a hand-written polling echo ROM (assembled with our own
+      `c6502.asm`), tested via an in-process pty pair
+      (`tests/test_run_cli.py`) and manually via a real subprocess +
+      pty client round-trip.
 - Rationale for chip realism: real 6502 builds (Ben Eater's included) use
   serial specifically because it's far simpler than faking a
   keyboard+display (see `docs/hardware-path.md`'s deferred bitmap-display
@@ -108,8 +98,31 @@ session held to resolve this — decided:
   layer of custom translation firmware an Arduino-bridge approach would
   otherwise need.
 - A network/socket-based console, and an Arduino-as-protocol-bridge
-  (rather than a real ACIA chip) were both considered and set aside for
-  now — see the design conversation this was decided in.
+  (rather than a real ACIA chip) were both considered and set aside.
+
+### Follow-up: run real Microsoft BASIC (next session)
+
+Confirmed available: Microsoft's original 1976-78 6502 BASIC source is
+now MIT-licensed
+([microsoft/BASIC-M6502](https://github.com/microsoft/BASIC-M6502)), but
+it's written for a 1970s PDP-10 cross-assembler (`TITLE`/`SUBTTL`/`IFE`/
+`IFN`/octal literals) our own assembler can't parse (it deliberately
+doesn't support macros/conditional assembly — same limitation hit with
+Klaus Dormann's suite in Phase 3). The practical path:
+[mist64/msbasic](https://github.com/mist64/msbasic) — a modernized,
+2-clause-BSD-licensed port that builds with `ca65` (already installed
+locally, part of the `cc65` package) and supports 9 historical platforms
+via a modular per-platform I/O file (e.g. `apple_loadsave.s`).
+
+- [ ] Write a new platform target for `msbasic` using our `AciaDevice`'s
+      real register conventions for character I/O, and fitting our own
+      memory map (`docs/architecture.md`).
+- [ ] Assemble with `ca65`/`ld65` (not our own assembler — this is
+      exactly the kind of large third-party assembly project our Phase 4
+      assembler explicitly doesn't try to consume) and load the result
+      into a `Machine`.
+- [ ] Try it live over the pty runner (`python -m c6502.run`) — the
+      actual "run real Microsoft BASIC on our own 6502" milestone.
 
 ## Phase 3 — Validation (functional suite done; decimal/interrupt deferred)
 
