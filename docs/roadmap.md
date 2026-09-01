@@ -100,29 +100,65 @@ Known gaps, updated now that Phase 3's functional suite is wired up:
 - A network/socket-based console, and an Arduino-as-protocol-bridge
   (rather than a real ACIA chip) were both considered and set aside.
 
-### Follow-up: run real Microsoft BASIC (next session)
+### Follow-up: run real Microsoft BASIC (done)
 
-Confirmed available: Microsoft's original 1976-78 6502 BASIC source is
-now MIT-licensed
-([microsoft/BASIC-M6502](https://github.com/microsoft/BASIC-M6502)), but
-it's written for a 1970s PDP-10 cross-assembler (`TITLE`/`SUBTTL`/`IFE`/
-`IFN`/octal literals) our own assembler can't parse (it deliberately
-doesn't support macros/conditional assembly — same limitation hit with
-Klaus Dormann's suite in Phase 3). The practical path:
-[mist64/msbasic](https://github.com/mist64/msbasic) — a modernized,
-2-clause-BSD-licensed port that builds with `ca65` (already installed
-locally, part of the `cc65` package) and supports 9 historical platforms
-via a modular per-platform I/O file (e.g. `apple_loadsave.s`).
+Real, unmodified Microsoft BASIC (the actual 1977 interpreter, now
+MIT-licensed by Microsoft) boots and runs programs on our emulator, over
+our own `AciaDevice`:
+```
+MEMORY SIZE? [Enter]
+TERMINAL WIDTH? [Enter]
 
-- [ ] Write a new platform target for `msbasic` using our `AciaDevice`'s
-      real register conventions for character I/O, and fitting our own
-      memory map (`docs/architecture.md`).
-- [ ] Assemble with `ca65`/`ld65` (not our own assembler — this is
-      exactly the kind of large third-party assembly project our Phase 4
-      assembler explicitly doesn't try to consume) and load the result
-      into a `Machine`.
-- [ ] Try it live over the pty runner (`python -m c6502.run`) — the
-      actual "run real Microsoft BASIC on our own 6502" milestone.
+15359 BYTES FREE
+
+COPYRIGHT 1977 BY MICROSOFT CO.
+
+OK
+PRINT 1+1
+ 2
+
+OK
+```
+- [x] **Platform files** (`msbasic/bios.s`, `defines_eater.s`, `eater.cfg`)
+      — adapted from `beneater/msbasic` (a fork of `mist64/msbasic`
+      already targeting a 6502 + serial ACIA, no video/keyboard hardware
+      — much closer to our system than the raw Microsoft source, which
+      targets a 1970s PDP-10 cross-assembler our own assembler can't
+      parse). Changes from Ben's original: ACIA moved to `$4000` (ours)
+      from `$5000` (his), `PHX`/`PLX` (65C02-only) replaced with an
+      NMOS-safe stack+`Y` dance, VIA-based flow control removed (no VIA
+      in our system), `RESET` jumps straight to `COLD_START` instead of
+      into the WOZMON machine-code monitor first.
+- [x] **A real bug found and fixed**: the first `PHX`/`PLX` replacement
+      preserved `X` by bouncing it through `A`, but restored it *after*
+      the character-to-return was already loaded into `A` — clobbering
+      it. Root-caused via `ld65`'s `-Ln` label file (mapping the stuck PC
+      back to `GETLN`/`MONRDKEY`), not by guessing from disassembly.
+      Fixed properly using `Y` as scratch (free here; neither
+      `BUFFER_SIZE` nor `READ_BUFFER` touch it) instead of a new
+      zero-page byte — which would have silently collided with BASIC's
+      own zero-page variables (`ZP_START0`-`ZP_START1` is exactly a
+      2-byte gap already fully used by `READ_PTR`/`WRITE_PTR`).
+- [x] `scripts/fetch_msbasic.sh` / `scripts/build_msbasic.sh` — fetch
+      (pinned commit, not vendored — same GPLv3-style caution as Klaus
+      Dormann's suite, since `mist64/msbasic`'s claimed 2-clause-BSD
+      license has no actual `LICENSE` file backing it) + build via
+      `ca65`/`ld65` (not our own assembler — this is exactly the kind of
+      large third-party assembly project our Phase 4 assembler
+      deliberately doesn't try to consume).
+- [x] `tests/test_msbasic.py` (`@pytest.mark.slow`) + manual proof: ran
+      the real `python -m c6502.run msbasic/build/msbasic.bin` CLI as a
+      subprocess and talked to it through its pty exactly like a real
+      terminal would.
+- One cosmetic artifact, left as-is (authentic, not a bug): a stray "U"
+  appears before "TERMINAL WIDTH?" — BASIC's own RAM-size auto-detection
+  probes upward until a write/read-back test fails, and that probe lands
+  on `$4000` (our ACIA) on its way to correctly stopping there; the $55
+  ('U') test byte it writes gets "transmitted" as a side effect. Real
+  hardware with memory-mapped I/O below the RAM ceiling has this same
+  quirk.
+- Not done (future, optional): WOZMON (the machine-code monitor) —
+  skipped deliberately, not needed for this milestone.
 
 ## Phase 3 — Validation (functional suite done; decimal/interrupt deferred)
 

@@ -47,14 +47,18 @@ later stretch goal, not a Phase 2 requirement.
   hardware I/O (e.g. a VIA chip, or an Arduino bit-banging a protocol) may
   care about exact cycle timing in ways our emulator doesn't currently
   model. Revisit if/when this becomes a real build.
-- **Real I/O chip**: resolved by decision, see `docs/architecture.md`'s
-  Console I/O device section and `docs/roadmap.md`'s Phase 2 follow-up —
-  the console device is being remodeled after the real WDC W65C51N ACIA
-  rather than staying a made-up protocol, specifically so real hardware
-  could use an actual W65C51N chip talking directly to a USB-serial cable
-  (no Arduino needed at all for this piece — an Arduino would only enter
-  the picture as an alternative bridge if we didn't have/want a real
-  ACIA chip).
+- **Real I/O chip**: done, see `docs/architecture.md`'s Console I/O device
+  section and `docs/roadmap.md`'s Phase 2 follow-up — the console device
+  is modeled after the real WDC W65C51N ACIA (register semantics from its
+  datasheet) rather than a made-up protocol, so real hardware could use an
+  actual W65C51N chip talking directly to a USB-serial cable (no Arduino
+  needed at all for this piece — an Arduino would only enter the picture
+  as an alternative bridge if we didn't have/want a real ACIA chip). Real,
+  unmodified Microsoft BASIC (`docs/roadmap.md`'s "run real Microsoft
+  BASIC" follow-up) boots and runs correctly against this model, using the
+  exact command-register bit pattern real 6502 BASIC ROMs use on real
+  W65C51N hardware — good independent evidence the model is faithful, not
+  just internally self-consistent.
 - **Electrical/bus realities**: bus contention, pull-ups, clock generation,
   reset circuitry, level shifting between the 6502 (5V) and an Arduino
   (often 3.3V or 5V depending on model) — none of this is modeled in

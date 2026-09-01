@@ -92,6 +92,13 @@ Summary:
       verified with a hand-assembled/hand-assembled-via-our-own-assembler
       polling echo program, both automated (in-process pty pair) and live
       (a real subprocess + pty client round-trip).
+- [x] **Follow-up to Phase 2** — real, unmodified **Microsoft BASIC**
+      (the actual 1977 interpreter, now MIT-licensed) boots and runs
+      programs on our emulator over the real ACIA (`msbasic/`,
+      `scripts/fetch_msbasic.sh` + `build_msbasic.sh`, not vendored — see
+      `docs/roadmap.md`). Found and fixed a real bug along the way (an
+      NMOS replacement for a 65C02-only instruction pair was clobbering
+      the character it was supposed to return).
 - [x] **Phase 3** — validated the CPU core against Klaus Dormann's
       functional test suite: **passes**, trapping at the documented success
       address (`$3469`) after 30,646,177 steps (~80s). Not vendored (it's
@@ -115,8 +122,9 @@ Summary:
 `src/c6502/emulator/{cpu,bus,addressing,instructions,opcodes,trace,
 devices,machine}.py`, `src/c6502/asm/{expr,encoding,operands,
 assembler}.py`, and `src/c6502/run.py` (the pty-attached CLI runner) are
-implemented and tested (136 fast tests + 1 slow Dormann-suite test).
-`src/c6502/cc/*` is still a stub for Phase 5.
+implemented and tested (136 fast tests + 2 slow tests: the Dormann suite
+and Microsoft BASIC boot/run). `src/c6502/cc/*` is still a stub for
+Phase 5.
 
 ## Reference documentation
 
@@ -135,9 +143,11 @@ cleanliness — pull specific facts as needed rather than bulk-copying):
   [github.com/Klaus2m5/6502_65C02_functional_tests](https://github.com/Klaus2m5/6502_65C02_functional_tests)
 - WDC W65C51N ACIA datasheet (real serial chip our `AciaDevice` models):
   [westerndesigncenter.com/wdc/documentation/w65c51n.pdf](https://www.westerndesigncenter.com/wdc/documentation/w65c51n.pdf)
-- `mist64/msbasic` (2-clause BSD; a modernized, `ca65`-buildable port of
-  Microsoft's now-MIT-licensed original 6502 BASIC — planned next, see
-  `docs/roadmap.md`): [github.com/mist64/msbasic](https://github.com/mist64/msbasic)
+- `beneater/msbasic` (fork of `mist64/msbasic`, a modernized,
+  `ca65`-buildable port of Microsoft's now-MIT-licensed original 6502
+  BASIC, already targeting a 6502 + serial ACIA; pinned commit, fetched
+  on demand rather than vendored — see `scripts/fetch_msbasic.sh` and
+  `docs/roadmap.md`): [github.com/beneater/msbasic](https://github.com/beneater/msbasic)
 
 ## Running tests
 
@@ -168,10 +178,13 @@ building the assembler/compiler and want `import c6502` to work from a
 plain `python3` shell too, but it's not required just to run the test
 suite.
 
-Plain `pytest` only runs the fast suite (~0.1s). To also validate against
-Klaus Dormann's functional test suite (~1-2 min, not run by default):
+Plain `pytest` only runs the fast suite (~0.1s). To also run the slow
+tests (Klaus Dormann's functional suite, ~80s, and Microsoft BASIC
+boot/run, ~15s; neither runs by default):
 ```
-scripts/fetch_dormann_tests.sh   # one-time per machine, fetches a GPLv3
-                                  # binary into a gitignored fixture dir
+scripts/fetch_dormann_tests.sh    # one-time per machine, fetches a GPLv3
+                                   # binary into a gitignored fixture dir
+scripts/fetch_msbasic.sh          # one-time per machine, fetches (pinned
+scripts/build_msbasic.sh          # commit, not vendored) + builds BASIC
 pytest -m slow
 ```

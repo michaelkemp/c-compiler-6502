@@ -220,3 +220,9 @@ __marimo__/
 # Klaus Dormann's 6502 test suite (GPLv3) -- fetched on demand via
 # scripts/fetch_dormann_tests.sh, never vendored. See docs/testing-strategy.md.
 tests/emulator/fixtures/dormann/
+
+# beneater/msbasic -- fetched on demand via scripts/fetch_msbasic.sh and
+# built via scripts/build_msbasic.sh, never vendored (no LICENSE file
+# upstream despite a permissive README claim). See docs/roadmap.md.
+msbasic/vendor/
+msbasic/build/

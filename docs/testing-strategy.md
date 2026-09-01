@@ -67,6 +67,19 @@ Two complementary layers:
    these alongside Phase 1 implementation, one instruction/addressing-mode
    family at a time, rather than only relying on the external suite.
 
+## Real-world software: Microsoft BASIC
+
+`tests/test_msbasic.py` (`@pytest.mark.slow`, same reasoning as the
+Dormann test) boots real, unmodified Microsoft BASIC and runs a line of
+it, asserting on the actual boot banner and computed output — the
+strongest end-to-end proof available that the whole stack (CPU, `Bus`,
+`AciaDevice`, `Machine`'s IRQ pump) is correct, since it's a real, 1977
+program's own serial driver exercising all of it, not code we wrote to
+test ourselves. Not vendored (same GPLv3-style caution as Dormann's suite
+— see `scripts/fetch_msbasic.sh`'s comment); run
+`scripts/fetch_msbasic.sh && scripts/build_msbasic.sh` once, then
+`pytest -m slow`, same as Dormann's test.
+
 ## Compiler (Phase 5-6)
 
 End-to-end style: a handful of small C sample programs (arithmetic, a loop,
@@ -82,4 +95,5 @@ for a single expression) as they're built, the same way as the CPU core.
 CPU core: the functional test suite passes as of Phase 3 (traps at `$3469`
 after 30,646,177 steps, ~80s in plain CPython); decimal/interrupt tests
 deferred, see above. Assembler: done as of Phase 4, 126 fast tests total
-across both. Compiler testing not started.
+across both. Real-world software: Microsoft BASIC boots and runs correctly
+(see above). Compiler testing not started.
