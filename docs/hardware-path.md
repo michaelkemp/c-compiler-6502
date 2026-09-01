@@ -47,11 +47,14 @@ later stretch goal, not a Phase 2 requirement.
   hardware I/O (e.g. a VIA chip, or an Arduino bit-banging a protocol) may
   care about exact cycle timing in ways our emulator doesn't currently
   model. Revisit if/when this becomes a real build.
-- **Real I/O chip**: our `$4000`-`$4001` console device is a toy. A real
-  build would use an actual peripheral chip (e.g. a 65C22 VIA) with its own
-  register semantics, and the Arduino would sit behind that, not behind our
-  made-up protocol. The C runtime's I/O routines would need a different
-  low-level implementation, but ideally the same higher-level interface.
+- **Real I/O chip**: resolved by decision, see `docs/architecture.md`'s
+  Console I/O device section and `docs/roadmap.md`'s Phase 2 follow-up —
+  the console device is being remodeled after the real WDC W65C51N ACIA
+  rather than staying a made-up protocol, specifically so real hardware
+  could use an actual W65C51N chip talking directly to a USB-serial cable
+  (no Arduino needed at all for this piece — an Arduino would only enter
+  the picture as an alternative bridge if we didn't have/want a real
+  ACIA chip).
 - **Electrical/bus realities**: bus contention, pull-ups, clock generation,
   reset circuitry, level shifting between the 6502 (5V) and an Arduino
   (often 3.3V or 5V depending on model) — none of this is modeled in

@@ -70,28 +70,46 @@ Known gaps, updated now that Phase 3's functional suite is wired up:
       run through `Machine`, producing `console.output_text == "HI"` —
       `tests/emulator/test_machine.py`
 
-### Planned follow-up: live I/O with the outside world (next session)
+### Planned follow-up: a real serial chip + live terminal I/O (next session)
 
-`ConsoleDevice` is currently in-process only — output collects into a
-Python `bytearray`, input only ever comes from a pre-loaded queue
-(`feed_input()`). Nothing connects it to a real terminal. Agreed design
-for the next session:
+`ConsoleDevice` is currently a made-up 2-register protocol
+(`$4000`/`$4001`), in-process only — output collects into a Python
+`bytearray`, input only ever comes from a pre-loaded queue
+(`feed_input()`). Nothing connects it to a real terminal, and a ROM
+written against it couldn't run unmodified on real hardware. Design
+session held to resolve this — decided:
 
-- [ ] A live-I/O mode for `ConsoleDevice` (or a variant of it): each byte
-      written to the output register prints immediately to real stdout;
-      a read from the input register blocks on real stdin when its queue
-      is empty, instead of returning `0`.
+- [ ] **Model the device after the real WDC W65C51N ACIA**
+      ([datasheet](https://www.westerndesigncenter.com/wdc/documentation/w65c51n.pdf)) —
+      the actual, currently-manufactured serial chip real 6502 hobbyist
+      builds use (the modern version of the MOS 6551). Data/status/
+      command/control registers, TX-empty/RX-full status bits, and
+      IRQ-on-receive support (finally giving the CPU's existing
+      `cpu.irq()` a real caller instead of only the hand-driven test in
+      `tests/emulator/test_interrupts.py`). Chosen over keeping the toy
+      protocol specifically because "aim at something buildable" is a
+      real goal, not just aspirational — ROM code written against a
+      faithfully-modeled ACIA would run unmodified on real hardware with
+      a real W65C51N later.
+- [ ] **Attach it to a real pseudo-terminal**, not just this process's
+      stdin/stdout — using Python's `pty` module so an actual terminal
+      program (`screen`, `minicom`, PuTTY) can connect to the running
+      emulator exactly as it would connect to real hardware over a serial
+      cable. Chosen over plain stdio specifically to make the emulator's
+      I/O experience match the eventual real-hardware experience, not
+      just "type into this same window."
 - [ ] A small CLI entry point that loads a ROM image (e.g. from
       `c6502.asm.assemble()`'s output, or a raw binary file) into a
-      `Machine` and drives the run loop interactively — the first way to
-      actually sit down and type at a running 6502 program.
-- Rationale: needs almost no new plumbing (same `read8`/`write8` device
-  interface `Bus` already dispatches to), and it's the same abstraction
-  point that would later get swapped for a real serial link to actual
-  hardware (`docs/hardware-path.md`) — nothing built here gets thrown
-  away when that happens. A network/socket-based console was considered
-  and set aside for now (adds connection-handling/concurrency complexity
-  with no current need).
+      `Machine`, opens the pty, prints its path, and drives the run loop.
+- Rationale for chip realism: real 6502 builds (Ben Eater's included) use
+  serial specifically because it's far simpler than faking a
+  keyboard+display (see `docs/hardware-path.md`'s deferred bitmap-display
+  note) — an actual W65C51N is inexpensive, real, and eliminates a whole
+  layer of custom translation firmware an Arduino-bridge approach would
+  otherwise need.
+- A network/socket-based console, and an Arduino-as-protocol-bridge
+  (rather than a real ACIA chip) were both considered and set aside for
+  now — see the design conversation this was decided in.
 
 ## Phase 3 — Validation (functional suite done; decimal/interrupt deferred)
 
