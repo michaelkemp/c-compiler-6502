@@ -60,6 +60,8 @@ docs/
   architecture.md      # memory map, I/O device, clock model, calling convention
   c-subset.md          # target C grammar for the compiler, phase by phase
   hardware-path.md     # notes on moving from emulator to real hardware
+  hardware-build.md    # the actual staged breadboard build: parts, wiring, diagrams
+  hardware/            # circuit diagrams + fetched (gitignored) datasheets
   testing-strategy.md  # how the emulator and (later) compiler get validated
 src/c6502/
   emulator/            # CPU core, bus/memory, opcode table, I/O devices
@@ -117,7 +119,16 @@ Summary:
       Dormann-suite bytes (see `docs/roadmap.md`).
 - [ ] **Phase 5** — tiny-C compiler v1
 - [ ] **Phase 6** — end-to-end integration (C → asm → emulator)
-- [ ] **Phase 7** — hardware-path design notes
+- [x] **Phase 7** — hardware-path design notes (`docs/hardware-path.md`)
+      plus a real staged build plan (`docs/hardware-build.md`): Stage 1
+      (CPU + RAM + ROM + clock + reset bring-up) fully detailed with a
+      sourced parts list, verified wiring, a circuit diagram
+      (`docs/hardware/stage1-schematic.svg`), and a bring-up program.
+      Stages 2/3 (serial console, then VGA/PS2 via a Pico coprocessor) are
+      outlined, to be detailed as we build them. Uses a WDC W65C02S rather
+      than an original NMOS 6502 (new-production availability/reliability
+      over exact emulator fidelity — a deliberate, documented deviation,
+      see `docs/roadmap.md`).
 
 `src/c6502/emulator/{cpu,bus,addressing,instructions,opcodes,trace,
 devices,machine}.py`, `src/c6502/asm/{expr,encoding,operands,
@@ -148,6 +159,14 @@ cleanliness — pull specific facts as needed rather than bulk-copying):
   BASIC, already targeting a 6502 + serial ACIA; pinned commit, fetched
   on demand rather than vendored — see `scripts/fetch_msbasic.sh` and
   `docs/roadmap.md`): [github.com/beneater/msbasic](https://github.com/beneater/msbasic)
+- CPU/RAM/ROM datasheets for the real breadboard build (`docs/hardware-build.md`),
+  fetched on demand via `scripts/fetch_datasheets.sh`, not vendored: W65C02S,
+  W65C51N ([westerndesigncenter.com](https://www.westerndesigncenter.com/wdc/documentation/)),
+  AS6C62256 ([alliancememory.com](https://www.alliancememory.com/wp-content/uploads/AS6C62256-23-March-2016-rev1.2.pdf)),
+  AT28C256 ([Microchip doc0006.pdf](https://ww1.microchip.com/downloads/en/DeviceDoc/doc0006.pdf))
+- [JJ65C02](https://hackaday.io/project/193153-jj65c02/log/225161-raspberry-pi-pico-video-and-ps2-keyboard)
+  — a real, published 6502 + Pi Pico (VGA + PS/2) project, the reference
+  point for Stage 3 of `docs/hardware-build.md`
 
 ## Running tests
 

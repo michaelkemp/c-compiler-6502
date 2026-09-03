@@ -243,8 +243,29 @@ See `docs/c-subset.md` for the exact grammar target. High level:
 
 ## Phase 7 — Hardware-path design notes
 
-- [ ] Document what would need to change to run on a real NMOS 6502 + RAM
-      + Arduino-bridged I/O (timing fidelity, a real I/O chip instead of our
-      toy MMIO device, level shifting/bus considerations)
-- [ ] Flag which Phase 1–6 design choices already anticipate this vs. would
-      need rework
+- [x] Document what would need to change to run on real hardware (timing
+      fidelity, a real I/O chip instead of a toy MMIO device, level
+      shifting/bus considerations) — `docs/hardware-path.md`
+- [x] Flag which Phase 1–6 design choices already anticipate this vs. would
+      need rework — same doc; the ACIA (Phase 2 follow-up) and the
+      assembler's flat binary output (Phase 4) both already anticipated it
+- [x] **A real, staged build plan** — `docs/hardware-build.md`: Stage 1
+      (CPU + RAM + ROM + clock + reset bring-up) fully detailed with a
+      real parts list (sourced, with links), verified pin-accurate wiring
+      (datasheets fetched via `scripts/fetch_datasheets.sh`, not vendored
+      — same reasoning as Dormann's suite/msbasic), a circuit diagram
+      (`docs/hardware/stage1-schematic.svg`), and a bring-up test program
+      using our own assembler. Stages 2 (serial console) and 3 (VGA/PS2
+      via a Pico coprocessor) are outlined, to be detailed when we get
+      there.
+- [ ] **Known deviation from the emulator's target, decided deliberately**:
+      the real build uses a **WDC W65C02S**, not an original NMOS 6502 —
+      new-production availability/reliability won out over exact fidelity
+      to what the emulator models (genuine NMOS 6502 dies are decades-old
+      surplus stock at this point). Software built against our NMOS-only
+      emulator should still run correctly (the 65C02 is a superset for
+      documented, legal opcodes), but this is worth remembering if
+      real-hardware behavior and the emulator's ever disagree on an edge
+      case — the 65C02 fixed a few NMOS quirks we deliberately reproduce
+      in software (e.g. the `JMP (indirect)` page-wrap bug in
+      `docs/6502-reference.md`).

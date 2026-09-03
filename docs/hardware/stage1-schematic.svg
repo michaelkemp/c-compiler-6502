@@ -1,0 +1,89 @@
+<svg viewBox="0 0 980 600" xmlns="http://www.w3.org/2000/svg" role="img"
+     aria-label="Stage 1 address decoding: the CPU's A15 line goes straight to the RAM chip's chip-enable and through one inverter gate to the ROM's chip-enable, splitting the 64KB address space into 32KB RAM below $8000 and 32KB ROM at or above $8000.">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <polygon points="0,0 6,3 0,6" fill="#1a1a1a"/>
+    </marker>
+  </defs>
+
+  <!-- CPU -->
+  <rect x="40" y="170" width="170" height="260" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="125" y="200" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a1a1a">W65C02S</text>
+  <text x="125" y="220" text-anchor="middle" font-size="12" fill="#1a1a1a">CPU</text>
+  <text x="60" y="250" font-size="12" fill="#1a1a1a">RESB (40)</text>
+  <text x="60" y="270" font-size="12" fill="#1a1a1a">PHI2 (37)</text>
+  <text x="60" y="330" font-size="12" fill="#1a1a1a">RWB (34)</text>
+  <text x="60" y="410" font-size="12" fill="#1a1a1a">A0-A15, D0-D7</text>
+
+  <!-- Clock oscillator -->
+  <rect x="40" y="40" width="140" height="60" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+  <text x="110" y="65" text-anchor="middle" font-size="12" fill="#1a1a1a">Crystal oscillator</text>
+  <text x="110" y="82" text-anchor="middle" font-size="12" fill="#1a1a1a">can (e.g. 1 MHz)</text>
+  <line x1="180" y1="70" x2="230" y2="70" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="230" y1="70" x2="230" y2="265" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="230" y1="265" x2="210" y2="265" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="235" y="60" font-size="11" fill="#1a1a1a">OUT -&gt; PHI2</text>
+
+  <!-- Reset RC -->
+  <rect x="230" y="40" width="150" height="60" fill="none" stroke="#1a1a1a" stroke-width="1.5"/>
+  <text x="305" y="65" text-anchor="middle" font-size="12" fill="#1a1a1a">RC power-on-reset</text>
+  <text x="305" y="82" text-anchor="middle" font-size="12" fill="#1a1a1a">+ manual pushbutton</text>
+  <line x1="305" y1="100" x2="305" y2="245" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="305" y1="245" x2="210" y2="245" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="315" y="235" font-size="11" fill="#1a1a1a">-&gt; RESB</text>
+
+  <!-- Address bus trunk -->
+  <line x1="210" y1="400" x2="470" y2="400" stroke="#1a1a1a" stroke-width="4"/>
+  <text x="300" y="392" text-anchor="middle" font-size="12" fill="#1a1a1a">Address bus A0-A15</text>
+  <line x1="470" y1="400" x2="470" y2="130" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="470" y1="400" x2="470" y2="490" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="470" y1="130" x2="520" y2="130" stroke="#1a1a1a" stroke-width="4" marker-end="url(#arrow)"/>
+  <line x1="470" y1="490" x2="520" y2="490" stroke="#1a1a1a" stroke-width="4" marker-end="url(#arrow)"/>
+
+  <!-- Data bus trunk (drawn below address bus, taps both chips' left edge lower half) -->
+  <line x1="210" y1="330" x2="440" y2="330" stroke="#1a1a1a" stroke-width="4"/>
+  <text x="325" y="322" text-anchor="middle" font-size="12" fill="#1a1a1a">Data bus D0-D7</text>
+  <line x1="440" y1="330" x2="440" y2="160" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="440" y1="330" x2="440" y2="520" stroke="#1a1a1a" stroke-width="4"/>
+  <line x1="440" y1="160" x2="520" y2="160" stroke="#1a1a1a" stroke-width="4" marker-end="url(#arrow)"/>
+  <line x1="440" y1="520" x2="520" y2="520" stroke="#1a1a1a" stroke-width="4" marker-end="url(#arrow)"/>
+
+  <!-- A15 tap, going to decode logic -->
+  <line x1="330" y1="400" x2="330" y2="480" stroke="#c0392b" stroke-width="2"/>
+  <text x="340" y="420" font-size="12" fill="#c0392b">A15</text>
+
+  <!-- Inverter gate (feeds ROM CE#) -->
+  <polygon points="330,480 380,500 330,520" fill="none" stroke="#c0392b" stroke-width="2"/>
+  <circle cx="386" cy="500" r="5" fill="none" stroke="#c0392b" stroke-width="2"/>
+  <text x="330" y="470" font-size="11" fill="#c0392b">1/4 74HC00, wired as NOT</text>
+  <line x1="391" y1="500" x2="520" y2="500" stroke="#c0392b" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="450" y="493" text-anchor="middle" font-size="11" fill="#c0392b">-&gt; ROM CE#</text>
+
+  <!-- A15 direct to RAM CE# -->
+  <line x1="330" y1="400" x2="330" y2="230" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="330" y1="230" x2="520" y2="230" stroke="#1a1a1a" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="420" y="223" text-anchor="middle" font-size="11" fill="#1a1a1a">A15 -&gt; RAM CE# (direct)</text>
+
+  <!-- RWB to RAM WE# -->
+  <line x1="210" y1="270" x2="500" y2="270" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="500" y1="270" x2="500" y2="195" stroke="#1a1a1a" stroke-width="1.5"/>
+  <line x1="500" y1="195" x2="520" y2="195" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="440" y="263" font-size="11" fill="#1a1a1a">RWB -&gt; RAM WE#</text>
+
+  <!-- RAM -->
+  <rect x="520" y="80" width="200" height="180" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="620" y="105" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a1a1a">AS6C62256</text>
+  <text x="620" y="123" text-anchor="middle" font-size="12" fill="#1a1a1a">32K x 8 SRAM</text>
+  <text x="620" y="141" text-anchor="middle" font-size="12" fill="#1a1a1a">$0000-$7FFF</text>
+  <text x="540" y="200" font-size="11" fill="#1a1a1a">OE# -&gt; GND (always on)</text>
+
+  <!-- ROM -->
+  <rect x="520" y="440" width="200" height="180" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="620" y="465" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a1a1a">AT28C256</text>
+  <text x="620" y="483" text-anchor="middle" font-size="12" fill="#1a1a1a">32K x 8 EEPROM</text>
+  <text x="620" y="501" text-anchor="middle" font-size="12" fill="#1a1a1a">$8000-$FFFF</text>
+  <text x="540" y="560" font-size="11" fill="#1a1a1a">OE# -&gt; GND (always on)</text>
+  <text x="540" y="580" font-size="11" fill="#1a1a1a">WE# -&gt; VCC (never written at runtime)</text>
+
+  <text x="20" y="20" font-size="11" fill="#1a1a1a">Bus lines shown thick; A0-A14 and D0-D7 fan out identically to both chips (both are 32K x 8).</text>
+</svg>

@@ -226,3 +226,8 @@ tests/emulator/fixtures/dormann/
 # upstream despite a permissive README claim). See docs/roadmap.md.
 msbasic/vendor/
 msbasic/build/
+
+# Hardware reference datasheets -- fetched on demand via
+# scripts/fetch_datasheets.sh, never vendored (manufacturer-copyrighted,
+# multi-MB each). See docs/hardware-build.md.
+docs/hardware/datasheets/
